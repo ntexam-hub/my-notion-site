@@ -18,7 +18,21 @@ async function getNotionBlocks() {
     const response = await notion.blocks.children.list({
       block_id: pageId,
     });
-    return response.results;
+    
+    // Fetch children for blocks that have them (e.g. Callouts)
+    const blocksWithChildren = await Promise.all(
+      response.results.map(async (block: any) => {
+        if (block.has_children) {
+          const childrenResponse = await notion.blocks.children.list({
+            block_id: block.id,
+          });
+          return { ...block, children: childrenResponse.results };
+        }
+        return block;
+      })
+    );
+    
+    return blocksWithChildren;
   } catch (error) {
     console.error("Error fetching from Notion:", error);
     return getFallbackData();

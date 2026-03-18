@@ -14,6 +14,23 @@ export default function ClientPage({ blocks }: { blocks: any[] }) {
 
   const texts = blocks.map(b => getRichText(b)).filter(t => t.length > 0);
   
+  // Extract Callout for the Manual section
+  const calloutBlock = blocks.find((b: any) => b.type === 'callout');
+  let manualContent: { text: string; icon: string; lines: string[] } | null = null;
+  
+  if (calloutBlock && calloutBlock.callout) {
+    const icon = calloutBlock.callout.icon?.emoji || "💡";
+    const text = calloutBlock.callout.rich_text?.map((t:any) => t.plain_text).join('') || "";
+    // Preserve empty lines if the user adds blank paragraphs in Notion
+    const lines = (calloutBlock.children || []).map((child: any) => {
+      if (child.type === 'paragraph' && child.paragraph?.rich_text) {
+        return child.paragraph.rich_text.map((t:any) => t.plain_text).join('');
+      }
+      return getRichText(child);
+    });
+    manualContent = { text, icon, lines };
+  }
+  
   const fadeUp: Variants = {
     hidden: { opacity: 0, y: 60 },
     visible: { opacity: 1, y: 0, transition: { duration: 1, ease: [0.16, 1, 0.3, 1] } }
@@ -135,6 +152,25 @@ export default function ClientPage({ blocks }: { blocks: any[] }) {
             );
           })}
         </div>
+
+        {/* Manual Section (No animation) */}
+        {manualContent && (
+          <div className="max-w-4xl mx-auto px-6 mt-40">
+            <div className="bg-[#f9f9f9] rounded-3xl p-10 md:p-14 border border-black/5 shadow-sm">
+              <div className="flex items-start gap-4 mb-6">
+                <span className="text-3xl" style={{ lineHeight: 1 }}>{manualContent.icon}</span>
+                <h3 className="text-2xl font-bold text-black leading-none">{manualContent.text}</h3>
+              </div>
+              <div className="pl-12 space-y-4">
+                {manualContent.lines.map((line, i) => (
+                  <p key={i} className={`text-lg text-gray-800 leading-relaxed ${line.trim() === '' ? 'h-6' : ''}`}>
+                    {line}
+                  </p>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );
