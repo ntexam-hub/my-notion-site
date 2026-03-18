@@ -20,15 +20,31 @@ export default function ClientPage({ blocks }: { blocks: any[] }) {
   
   // Extract Callout for the Manual section
   const calloutBlock = blocks.find((b: any) => b.type === 'callout');
-  let manualContent: { text: string; icon: string; lines: { type: string, text: string }[] } | null = null;
+  let manualContent: { text: string; icon: string; lines: any[] } | null = null;
   
   if (calloutBlock && calloutBlock.callout) {
     const icon = calloutBlock.callout.icon?.emoji || "💡";
     const text = calloutBlock.callout.rich_text?.map((t:any) => t.plain_text).join('') || "";
-    // Preserve empty lines if the user adds blank paragraphs in Notion
-    const lines = (calloutBlock.children || []).map((child: any) => {
-      return { type: child.type, text: getRichText(child) };
+    
+    // Group consecutive list items together
+    const lines: any[] = [];
+    (calloutBlock.children || []).forEach((child: any) => {
+      const type = child.type;
+      const childText = getRichText(child);
+      const lastLine = lines[lines.length - 1];
+      
+      if (type === 'bulleted_list_item' || type === 'numbered_list_item') {
+        const groupType = type === 'bulleted_list_item' ? 'bulleted_list' : 'numbered_list';
+        if (lastLine && lastLine.type === groupType) {
+          lastLine.items.push(childText);
+        } else {
+          lines.push({ type: groupType, items: [childText] });
+        }
+      } else {
+        lines.push({ type, text: childText });
+      }
     });
+
     manualContent = { text, icon, lines };
   }
   
@@ -164,22 +180,22 @@ export default function ClientPage({ blocks }: { blocks: any[] }) {
               </div>
               <div className="pl-12 space-y-4">
                 {manualContent.lines.map((line, i) => {
-                  if (line.type === 'bulleted_list_item') {
+                  if (line.type === 'bulleted_list') {
                     return (
-                      <ul key={i} className="list-disc list-inside text-lg text-gray-800 leading-relaxed ml-2">
-                        <li>{line.text}</li>
+                      <ul key={i} className="list-disc list-inside text-lg text-gray-800 leading-relaxed ml-2 space-y-1">
+                        {line.items.map((item: string, j: number) => <li key={j}>{item}</li>)}
                       </ul>
                     );
                   }
-                  if (line.type === 'numbered_list_item') {
+                  if (line.type === 'numbered_list') {
                     return (
-                      <ol key={i} className="list-decimal list-inside text-lg text-gray-800 leading-relaxed ml-2">
-                        <li>{line.text}</li>
+                      <ol key={i} className="list-decimal list-inside text-lg text-gray-800 leading-relaxed ml-2 space-y-1">
+                        {line.items.map((item: string, j: number) => <li key={j}>{item}</li>)}
                       </ol>
                     );
                   }
                   return (
-                    <p key={i} className={`text-lg text-gray-800 leading-relaxed ${line.text.trim() === '' ? 'h-6' : ''}`}>
+                    <p key={i} className={`text-lg text-gray-800 leading-relaxed ${(line.text || '').trim() === '' ? 'h-6' : ''}`}>
                       {line.text}
                     </p>
                   );
