@@ -43,8 +43,8 @@ function getFallbackData() {
   ];
 }
 
-// This page can be statically generated or server-rendered
-export const revalidate = 60; // revalidate every 60 seconds
+// Always fetch fresh data from Notion on every request (no cache delay)
+export const dynamic = 'force-dynamic';
 
 export default async function Page() {
   const blocks = await getNotionBlocks();
