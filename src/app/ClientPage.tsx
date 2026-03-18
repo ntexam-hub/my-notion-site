@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, Variants } from "framer-motion";
 import { Key, CheckCircle, Terminal, Plug, Sparkles } from "lucide-react";
 
 export default function ClientPage({ blocks }: { blocks: any[] }) {
@@ -14,7 +14,7 @@ export default function ClientPage({ blocks }: { blocks: any[] }) {
 
   const texts = blocks.map(b => getRichText(b)).filter(t => t.length > 0);
   
-  const fadeUp = {
+  const fadeUp: Variants = {
     hidden: { opacity: 0, y: 60 },
     visible: { opacity: 1, y: 0, transition: { duration: 1, ease: [0.16, 1, 0.3, 1] } }
   };
