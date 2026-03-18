@@ -1,0 +1,54 @@
+# Notion × AntiGravity 連携ガイド構築マニュアル (Geminiとの対話録)
+
+## 概要
+Google DeepmindのAIコーディングアシスタント「Antigravity (Gemini)」とペアプログラミングを行い、Notionのページをデータベース（CMS）として利用する、Apple製品紹介ページ風の美しい解説サイト（特設サイト）を構築・公開した際の一連のプロセスをまとめたマニュアルです。
+
+---
+
+## 💻 1. プロジェクトの立ち上げと基盤構築
+**目的:** 最新のモダンWeb開発技術を用いた土台作り。
+* **技術スタック:** Next.js (App Router), Tailwind CSS, Framer Motion
+* **手順:**
+  1. `npx create-next-app` コマンドでプロジェクト (`core-apogee`) を初期化。
+  2. `framer-motion` とアイコン用に `lucide-react` を追加インストール。
+  3. デザインコンセプトとして「白基調 (The Apple Aesthetic)」「Glassmorphism（すりガラス効果）」「美しいタイポグラフィ (Interフォント)」を採用し、`globals.css` と `layout.tsx` を整備。
+
+## 🔌 2. Notion API (MCP) を用いたデータの連携
+**目的:** NotionページとNext.jsアプリをリアルタイムで同期させる。
+* **手順:**
+  1. MCP (Model Context Protocol) 経由で、Geminiが直接Notionの「Anti Gravity」ページを読み書き。
+  2. GeminiがNotionページ内にStep 1〜5の解説ドキュメントを自動で書き込み (API: `patch-block-children` を使用)。
+  3. Next.jsアプリに `@notionhq/client` を導入。
+  4. `.env.local` に `NOTION_API_KEY` と `NOTION_PAGE_ID` を定義し、API連携を確立。
+  5. アプリの通信設定を `export const dynamic = 'force-dynamic';` と設定し、キャッシュを無効化。これにより**Notionでの編集がブラウザのリロードだけで「即座に」サイトへ反映される**仕組みを実現。
+
+## 🎨 3. UI/UX のリッチ化（Framer Motion）
+**目的:** スクロールに合わせて要素が浮き上がる、没入感のある表現の追加。
+* **手順:**
+  1. クライアントコンポーネント (`ClientPage.tsx`) を作成し、Framer Motionを実装。
+  2. **Stagger（時間差）アニメーション**: `staggerChildren` プロパティを使い、STEP名・タイトル・説明文が0.2秒刻みで順番に浮き上がるよう設定。
+  3. **Spring（スプリング）効果**: アイコン付きカードが下から現れる際、バネのように少し弾んでストップする物理ベースのアニメーションを追加。
+  4. **Blur（ブラー）効果**: テキスト要素が表示される過程で、最初はボヤけていて（ぼかし）、徐々にピントが合うような高級なフェードイン（Reveal効果）を実装。
+
+## 🐙 4. GitHub へのプッシュと自動化
+**目的:** ソースコードのバージョン管理と本番公開への準備。
+* **手順:**
+  1. プロジェクト内で `git init` を実行。機密情報（`.env.local`）が公開されないよう `.gitignore` を設定。
+  2. Geminiがターミナルから `gh` (GitHub CLI) をダウンロード・展開。
+  3. `gh auth login` コマンドを通じて、ブラウザのDevice認証（ワンタイムパスコード）を使用し、ユーザーのGitHubとの紐付けを完了。
+  4. Geminiが `my-notion-site` というリポジトリの作成と初期コードのPushまでを全自動で代行。
+
+## 🚀 5. Vercelへのデプロイ（本番公開）
+**目的:** アプリケーションをインターネット上に公開する。
+* **手順:**
+  1. Vercelのダッシュボード（ブラウザ）から、GitHubの `my-notion-site` リポジトリを「Import」。
+  2. 事前にGeminiが作成した環境変数コピペ用のファイル (`vercel-env-import.txt`) の中身を使って、Vercelの「Environment Variables」にキーを登録。
+  3. 設定後「Deploy」を実行。※途中、TypeScriptの厳格な型チェックによりFramer Motionの `Variants` に起因するビルドエラーが発生したが、Geminiがエラーログを読み取り即座に型定義を修正し、再Push・解消した。
+
+---
+
+### 【運用のお作法とポイント】
+* **Notionでのテキスト修正方法:**
+  連携しているNotionページ（Anti Gravity）のテキストを編集したあと、公開されたVercelのURLを開き、「ブラウザの更新（リロード）」ボタンを一度押すだけで、その変更が即座にWebサイトへ反映・公開されます（即時同期設定 `force-dynamic` 仕様）。
+* **Vercel環境の更新:**
+  大幅なソースコードの追加・修正が発生した場合は、ローカルでコードを修正し `git push` すれば、Vercelが自動的に検知して再ビルド（デプロイ）を走らせてくれます。
