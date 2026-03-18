@@ -8,7 +8,11 @@ export default function ClientPage({ blocks }: { blocks: any[] }) {
     if (!block) return "";
     let rt: any[] = [];
     if (block.type === 'heading_1' && block.heading_1?.rich_text) rt = block.heading_1.rich_text;
+    if (block.type === 'heading_2' && block.heading_2?.rich_text) rt = block.heading_2.rich_text;
+    if (block.type === 'heading_3' && block.heading_3?.rich_text) rt = block.heading_3.rich_text;
     if (block.type === 'paragraph' && block.paragraph?.rich_text) rt = block.paragraph.rich_text;
+    if (block.type === 'bulleted_list_item' && block.bulleted_list_item?.rich_text) rt = block.bulleted_list_item.rich_text;
+    if (block.type === 'numbered_list_item' && block.numbered_list_item?.rich_text) rt = block.numbered_list_item.rich_text;
     return rt.map((t: any) => t.plain_text || t.text?.content || '').join('');
   }
 
@@ -16,17 +20,14 @@ export default function ClientPage({ blocks }: { blocks: any[] }) {
   
   // Extract Callout for the Manual section
   const calloutBlock = blocks.find((b: any) => b.type === 'callout');
-  let manualContent: { text: string; icon: string; lines: string[] } | null = null;
+  let manualContent: { text: string; icon: string; lines: { type: string, text: string }[] } | null = null;
   
   if (calloutBlock && calloutBlock.callout) {
     const icon = calloutBlock.callout.icon?.emoji || "💡";
     const text = calloutBlock.callout.rich_text?.map((t:any) => t.plain_text).join('') || "";
     // Preserve empty lines if the user adds blank paragraphs in Notion
     const lines = (calloutBlock.children || []).map((child: any) => {
-      if (child.type === 'paragraph' && child.paragraph?.rich_text) {
-        return child.paragraph.rich_text.map((t:any) => t.plain_text).join('');
-      }
-      return getRichText(child);
+      return { type: child.type, text: getRichText(child) };
     });
     manualContent = { text, icon, lines };
   }
@@ -162,11 +163,27 @@ export default function ClientPage({ blocks }: { blocks: any[] }) {
                 <h3 className="text-2xl font-bold text-black leading-none">{manualContent.text}</h3>
               </div>
               <div className="pl-12 space-y-4">
-                {manualContent.lines.map((line, i) => (
-                  <p key={i} className={`text-lg text-gray-800 leading-relaxed ${line.trim() === '' ? 'h-6' : ''}`}>
-                    {line}
-                  </p>
-                ))}
+                {manualContent.lines.map((line, i) => {
+                  if (line.type === 'bulleted_list_item') {
+                    return (
+                      <ul key={i} className="list-disc list-inside text-lg text-gray-800 leading-relaxed ml-2">
+                        <li>{line.text}</li>
+                      </ul>
+                    );
+                  }
+                  if (line.type === 'numbered_list_item') {
+                    return (
+                      <ol key={i} className="list-decimal list-inside text-lg text-gray-800 leading-relaxed ml-2">
+                        <li>{line.text}</li>
+                      </ol>
+                    );
+                  }
+                  return (
+                    <p key={i} className={`text-lg text-gray-800 leading-relaxed ${line.text.trim() === '' ? 'h-6' : ''}`}>
+                      {line.text}
+                    </p>
+                  );
+                })}
               </div>
             </div>
           </div>
