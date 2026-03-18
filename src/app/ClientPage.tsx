@@ -62,30 +62,74 @@ export default function ClientPage({ blocks }: { blocks: any[] }) {
           {stepsData.map((step, i) => {
             const Icon = step.icon;
             const isEven = i % 2 === 0;
+
+            const containerVariants: Variants = {
+              hidden: { opacity: 0 },
+              visible: {
+                opacity: 1,
+                transition: {
+                  staggerChildren: 0.2, // Text elements will reveal one by one
+                  delayChildren: 0.1,
+                }
+              }
+            };
+
+            const imageVariants: Variants = {
+              hidden: { opacity: 0, y: 100, scale: 0.9 },
+              visible: { 
+                opacity: 1, 
+                y: 0, 
+                scale: 1,
+                transition: { 
+                  type: "spring", 
+                  stiffness: 70, 
+                  damping: 15, 
+                  mass: 1,
+                  duration: 1.2
+                } 
+              }
+            };
+
+            const textVariants: Variants = {
+              hidden: { opacity: 0, y: 50, filter: "blur(10px)" },
+              visible: { 
+                opacity: 1, 
+                y: 0, 
+                filter: "blur(0px)",
+                transition: { 
+                  duration: 0.8, 
+                  ease: [0.16, 1, 0.3, 1] 
+                } 
+              }
+            };
+
             return (
               <motion.section 
                 key={i}
                 initial="hidden"
                 whileInView="visible"
-                viewport={{ once: true, margin: "-100px" }}
-                variants={fadeUp}
+                viewport={{ once: true, margin: "-100px", amount: 0.3 }}
+                variants={containerVariants}
                 className={`flex flex-col md:flex-row items-center gap-16 ${isEven ? '' : 'md:flex-row-reverse'}`}
               >
-                <div className={`w-full md:w-1/2 flex justify-center`}>
+                <motion.div variants={imageVariants} className={`w-full md:w-1/2 flex justify-center`}>
                   <div className={`w-full aspect-square max-w-sm md:max-w-md rounded-[3rem] ${step.bg} flex items-center justify-center shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] border border-black/5 overflow-hidden relative group`}>
                     {/* Glass glare effect */}
                     <div className="absolute inset-0 bg-gradient-to-tr from-white/20 to-white/70 opacity-0 group-hover:opacity-100 transition-opacity duration-1000"></div>
-                    <Icon className={`w-32 h-32 ${step.color} drop-shadow-md z-10 transform group-hover:scale-110 transition-transform duration-700`} />
+                    <Icon className={`w-32 h-32 ${step.color} drop-shadow-md z-10 transform group-hover:scale-110 group-hover:-translate-y-2 transition-all duration-700 ease-out`} />
                   </div>
-                </div>
-                <div className="w-full md:w-1/2">
-                  <h3 className="text-[#86868b] font-bold text-xl tracking-widest uppercase mb-4">Step {i + 1}</h3>
-                  <h2 className="text-5xl md:text-6xl font-black tracking-tighter mb-6 leading-[1.1] text-black">
+                </motion.div>
+                
+                <div className="w-full md:w-1/2 flex flex-col gap-4">
+                  <motion.h3 variants={textVariants} className="text-[#86868b] font-bold text-xl tracking-widest uppercase">
+                    Step {i + 1}
+                  </motion.h3>
+                  <motion.h2 variants={textVariants} className="text-5xl md:text-6xl font-black tracking-tighter leading-[1.1] text-black">
                     {step.title ? step.title.replace(/^Step \d+: /, '') : `Step ${i + 1}`}
-                  </h2>
-                  <p className="text-2xl text-[#86868b] font-medium leading-relaxed tracking-tight">
+                  </motion.h2>
+                  <motion.p variants={textVariants} className="text-2xl text-[#86868b] font-medium leading-relaxed tracking-tight mt-2">
                     {step.desc}
-                  </p>
+                  </motion.p>
                 </div>
               </motion.section>
             );
